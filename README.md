@@ -5,16 +5,19 @@ This repository contains implementations and explanations of Fourier analysis te
 ## Table of Contents
 
 1. [Fourier Series](#fourier-series)
-2. [Discrete Fourier Transform](#discrete-fourier-transform)
-3. [Discrete Cosine and Sine Transforms](#discrete-cosine-and-sine-transforms)
-4. [Fast Fourier Transform](#fast-fourier-transform)
-5. [Advanced Topics](#advanced-topics)
-   - [Gibbs Phenomenon](#gibbs-phenomenon)
+2. [Gibbs Phenomenon](#gibbs-phenomenon)
+3. [Fourier Transform (DFT)](#fourier-transform-dft)
+4. [Inverse Fourier Transform](#inverse-fourier-transform)
+5. [Fast Fourier Transform](#fast-fourier-transform)
+6. [Discrete Cosine and Sine Transforms](#discrete-cosine-and-sine-transforms)
+7. [Advanced Topics](#advanced-topics)
    - [Windowing Functions](#windowing-functions)
    - [Filtering and Smoothing](#filtering-and-smoothing)
-6. [Applications](#applications)
-7. [Implementation Examples](#implementation-examples)
-8. [References](#references)
+   - [Nyquist-Shannon Sampling Theorem](#nyquist-shannon-sampling-theorem)
+   - [Frequency Resolution and Zero-Padding](#frequency-resolution-and-zero-padding)
+8. [Applications](#applications)
+9. [Implementation Examples](#implementation-examples)
+10. [References](#references)
 
 ## Fourier Series
 
@@ -84,7 +87,16 @@ def compute_coefficients(func, n_terms, period=2*np.pi, num_points=1000):
     return a0, an, bn
 ```
 
-## Discrete Fourier Transform
+## Gibbs Phenomenon
+
+The Gibbs phenomenon is an oscillatory behavior that occurs near discontinuities when approximating a function with Fourier series. Key characteristics:
+
+- Overshoot near discontinuities (about 9% of jump magnitude)
+- Overshoot doesn't diminish with more terms
+- Width of the oscillations decreases with more terms
+- Total area of the oscillations approaches zero
+
+## Fourier Transform (DFT)
 
 ### From Continuous to Discrete
 
@@ -95,10 +107,6 @@ While the Fourier series applies to continuous, periodic functions, the Discrete
 For a sequence $x_0, x_1, ..., x_{N-1}$, the DFT is defined as:
 
 $$X_k = \sum_{n=0}^{N-1} x_n e^{-i\frac{2\pi}{N}kn} \quad \text{for } k = 0, 1, ..., N-1$$
-
-The inverse DFT (IDFT) is:
-
-$$x_n = \frac{1}{N}\sum_{k=0}^{N-1} X_k e^{i\frac{2\pi}{N}kn} \quad \text{for } n = 0, 1, ..., N-1$$
 
 In terms of sines and cosines:
 
@@ -141,53 +149,36 @@ def dft_naive(x):
 
 The naive DFT implementation has a time complexity of $O(N^2)$, making it impractical for large signals. This led to the development of the Fast Fourier Transform algorithm.
 
-## Discrete Cosine and Sine Transforms
+## Inverse Fourier Transform
 
-### DCT: Mathematical Formulation
+The inverse DFT (IDFT) reverses the transformation, taking frequency components back to the time domain:
 
-The Discrete Cosine Transform (DCT) uses only cosine functions and produces real-valued outputs for real-valued inputs. The most common form (DCT-II) is:
+$$x_n = \frac{1}{N}\sum_{k=0}^{N-1} X_k e^{i\frac{2\pi}{N}kn} \quad \text{for } n = 0, 1, ..., N-1$$
 
-$$X_k = \sum_{n=0}^{N-1} x_n \cos\left[\frac{\pi}{N}(n+\frac{1}{2})k\right] \quad \text{for } k = 0, 1, ..., N-1$$
-
-### DST: Mathematical Formulation
-
-Similarly, the Discrete Sine Transform (DST) uses only sine functions:
-
-$$X_k = \sum_{n=0}^{N-1} x_n \sin\left[\frac{\pi}{N}(n+\frac{1}{2})(k+1)\right] \quad \text{for } k = 0, 1, ..., N-1$$
-
-### Advantages and Applications
-
-- **Energy Compaction**: DCT concentrates energy in fewer coefficients
-- **Real-valued**: Computationally more efficient for real data
-- **Applications**: JPEG image compression (DCT), MPEG video compression
-- **Boundary Conditions**: Better suited for certain boundary conditions in differential equations
-
-### Implementation Example (DCT-II)
+Implementation example:
 
 ```python
-def dct_ii(x):
+def idft_naive(X):
     """
-    Compute the DCT-II of input signal x.
+    Compute the Inverse Discrete Fourier Transform (IDFT).
     
     Parameters:
-        x (array): Input signal array (real)
+        X (array): Input frequency domain signal array
         
     Returns:
-        array: DCT of x (real array)
+        array: IDFT of X (complex array)
     """
-    N = len(x)
-    X = np.zeros(N)
+    N = len(X)
+    x = np.zeros(N, dtype=complex)
     
-    for k in range(N):
-        for n in range(N):
-            X[k] += x[n] * np.cos(np.pi * (n + 0.5) * k / N)
+    for n in range(N):
+        for k in range(N):
+            x[n] += X[k] * np.exp(2j * np.pi * k * n / N)
     
-    # Scale the DC component differently
-    X[0] *= np.sqrt(1/N)
-    # Scale AC components
-    X[1:] *= np.sqrt(2/N)
+    # Normalize by N
+    x = x / N
     
-    return X
+    return x
 ```
 
 ## Fast Fourier Transform
@@ -274,16 +265,56 @@ def bit_reversal_permutation(N):
     return indices
 ```
 
+## Discrete Cosine and Sine Transforms
+
+### DCT: Mathematical Formulation
+
+The Discrete Cosine Transform (DCT) uses only cosine functions and produces real-valued outputs for real-valued inputs. The most common form (DCT-II) is:
+
+$$X_k = \sum_{n=0}^{N-1} x_n \cos\left[\frac{\pi}{N}(n+\frac{1}{2})k\right] \quad \text{for } k = 0, 1, ..., N-1$$
+
+### DST: Mathematical Formulation
+
+Similarly, the Discrete Sine Transform (DST) uses only sine functions:
+
+$$X_k = \sum_{n=0}^{N-1} x_n \sin\left[\frac{\pi}{N}(n+\frac{1}{2})(k+1)\right] \quad \text{for } k = 0, 1, ..., N-1$$
+
+### Advantages and Applications
+
+- **Energy Compaction**: DCT concentrates energy in fewer coefficients
+- **Real-valued**: Computationally more efficient for real data
+- **Applications**: JPEG image compression (DCT), MPEG video compression
+- **Boundary Conditions**: Better suited for certain boundary conditions in differential equations
+
+### Implementation Example (DCT-II)
+
+```python
+def dct_ii(x):
+    """
+    Compute the DCT-II of input signal x.
+    
+    Parameters:
+        x (array): Input signal array (real)
+        
+    Returns:
+        array: DCT of x (real array)
+    """
+    N = len(x)
+    X = np.zeros(N)
+    
+    for k in range(N):
+        for n in range(N):
+            X[k] += x[n] * np.cos(np.pi * (n + 0.5) * k / N)
+    
+    # Scale the DC component differently
+    X[0] *= np.sqrt(1/N)
+    # Scale AC components
+    X[1:] *= np.sqrt(2/N)
+    
+    return X
+```
+
 ## Advanced Topics
-
-### Gibbs Phenomenon
-
-The Gibbs phenomenon is an oscillatory behavior that occurs near discontinuities when approximating a function with Fourier series. Key characteristics:
-
-- Overshoot near discontinuities (about 9% of jump magnitude)
-- Overshoot doesn't diminish with more terms
-- Width of the oscillations decreases with more terms
-- Total area of the oscillations approaches zero
 
 ### Windowing Functions
 
