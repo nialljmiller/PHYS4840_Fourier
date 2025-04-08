@@ -181,36 +181,53 @@ def idft_naive(X):
     return x
 ```
 
+
+
 ## Fast Fourier Transform
 
 ### The Breakthrough Algorithm
 
-The Fast Fourier Transform (FFT) is an algorithm that computes the DFT in $O(N \log N)$ time, making Fourier analysis practical for real-world applications.
+The Fast Fourier Transform (FFT) is an algorithm that computes the Discrete Fourier Transform (DFT) in O(N log N) time, making Fourier analysis practical for real-world applications. This remarkable improvement over the naive O(N²) DFT implementation represents one of the most significant algorithmic breakthroughs in computational mathematics.
+
+### Understanding Computational Complexity
+
+When analyzing algorithms, we use Big O notation to describe how their performance scales with input size:
+
+- **O(N²)**: The computational cost grows quadratically with input size N (naive DFT)
+- **O(N log N)**: The computational cost grows much more slowly (FFT)
+
+To appreciate this difference, consider the computational requirements for a signal with N = 1,000,000 points:
+- Naive DFT: ~1,000,000,000,000 (trillion) operations
+- FFT: ~20,000,000 (20 million) operations
+
+This approximately 50,000× speedup is what made many modern digital signal processing applications feasible.
 
 ### Divide and Conquer Strategy
 
-The key insight of the FFT (specifically the Cooley-Tukey algorithm) is to recursively split the DFT computation into smaller DFTs:
+The Cooley-Tukey FFT algorithm uses an elegant recursive approach:
 
-1. Split the N-point DFT into two N/2-point DFTs:
-   - One for even-indexed points
-   - One for odd-indexed points
-2. Combine results using the "butterfly" pattern
+1. **Insight**: Computing two N/2-point DFTs and combining them is much cheaper than one N-point DFT
+2. **Recursive decomposition**: Split an N-point transform into:
+   - One N/2-point transform of the even-indexed elements
+   - One N/2-point transform of the odd-indexed elements
+3. **Recombination**: Combine these results using the "butterfly" pattern
 
-### Computational Complexity Comparison
+The "butterfly" name comes from the shape of the data flow diagram:
+```
+A ----> A + W*B
+|       |
+X       X  ← "Butterfly" shape
+|       |
+B ----> A - W*B
+```
+Where W is a "twiddle factor" (complex exponential term).
 
-| Algorithm | Time Complexity | Space Complexity | Example: N=1,000,000 |
-|-----------|-----------------|------------------|----------------------|
-| Naive DFT | $O(N^2)$        | $O(N)$           | ~1 trillion operations |
-| FFT       | $O(N \log N)$   | $O(N)$           | ~20 million operations |
-
-This dramatic improvement from $O(N^2)$ to $O(N \log N)$ is what made Fourier analysis practically useful for large datasets.
-
-### Recursive Implementation Example
+### Recursive Implementation
 
 ```python
-def fft_recursive(x):
+def fft(x):
     """
-    Compute the FFT using the Cooley-Tukey algorithm.
+    Compute the Fast Fourier Transform using the Cooley-Tukey algorithm.
     Works for signal lengths that are powers of 2.
     
     Parameters:
@@ -230,8 +247,8 @@ def fft_recursive(x):
         raise ValueError("Signal length must be a power of 2")
     
     # Split even and odd indices
-    even = fft_recursive(x[0::2])
-    odd = fft_recursive(x[1::2])
+    even = fft(x[0::2])  # Recursive call on even-indexed elements
+    odd = fft(x[1::2])   # Recursive call on odd-indexed elements
     
     # Twiddle factors
     twiddle = np.exp(-2j * np.pi * np.arange(N//2) / N)
@@ -241,30 +258,121 @@ def fft_recursive(x):
     half_N = N // 2
     
     for k in range(half_N):
-        result[k] = even[k] + twiddle[k] * odd[k]
-        result[k + half_N] = even[k] - twiddle[k] * odd[k]
+        result[k] = even[k] + twiddle[k] * odd[k]  # First half frequencies
+        result[k + half_N] = even[k] - twiddle[k] * odd[k]  # Second half frequencies
     
     return result
 ```
 
-### Iterative Implementation Considerations
+The mathematical elegance of this approach lies in exploiting the symmetry properties of the DFT to avoid redundant calculations.
 
-While the recursive implementation is elegant, an iterative implementation with bit-reversal permutation is often more efficient in practice:
+### Iterative Implementation
+
+While the recursive implementation illustrates the algorithm clearly, production code typically uses an iterative implementation for better performance:
 
 ```python
-def bit_reversal_permutation(N):
-    """Generate bit-reversal permutation indices for FFT."""
+def bit_reversal_permutation(x):
+    """
+    Rearrange array using bit-reversal permutation.
+    
+    Parameters:
+        x (array): Input array
+        
+    Returns:
+        array: Permuted array
+    """
+    N = len(x)
     num_bits = int(np.log2(N))
-    indices = np.zeros(N, dtype=int)
+    permuted = np.zeros_like(x)
     
     for i in range(N):
+        # Convert i to binary, reverse bits, convert back to decimal
         binary = format(i, f'0{num_bits}b')
         reversed_binary = binary[::-1]
-        indices[i] = int(reversed_binary, 2)
+        j = int(reversed_binary, 2)
+        permuted[j] = x[i]
     
-    return indices
+    return permuted
+
+def iterative_fft(x):
+    """
+    Compute FFT using an iterative implementation.
+    
+    Parameters:
+        x (array): Input signal
+        
+    Returns:
+        array: FFT of x
+    """
+    N = len(x)
+    
+    # Check if N is a power of 2
+    if N & (N-1) != 0:
+        raise ValueError("Signal length must be a power of 2")
+    
+    # Bit-reversal permutation
+    x = bit_reversal_permutation(x)
+    
+    # Main FFT computation
+    num_stages = int(np.log2(N))
+    
+    # For each stage
+    for stage in range(1, num_stages + 1):
+        butterfly_size = 2 ** stage
+        half_size = butterfly_size // 2
+        
+        # Twiddle factors for this stage
+        omega = np.exp(-2j * np.pi / butterfly_size)
+        twiddles = [omega ** k for k in range(half_size)]
+        
+        # Apply butterflies
+        for k in range(0, N, butterfly_size):
+            for j in range(half_size):
+                u = x[k + j]
+                v = x[k + j + half_size] * twiddles[j]
+                
+                x[k + j] = u + v
+                x[k + j + half_size] = u - v
+    
+    return x
 ```
 
+The iterative implementation offers several advantages:
+1. **Efficiency**: Avoids function call overhead and potential stack overflow
+2. **Memory locality**: Better cache performance
+3. **In-place computation**: Can be implemented to modify the array directly
+
+### Practical Considerations
+
+When implementing or using FFT in practice:
+
+1. **Input length requirements**: 
+   - Most efficient when N is a power of 2
+   - Use zero-padding or specialized algorithms for other lengths
+   
+2. **Numerical stability**:
+   - Be aware of potential roundoff errors, especially with large N
+   - Consider scaled or normalized variants for better precision
+   
+3. **Performance optimizations**:
+   - Memory access patterns can significantly affect performance
+   - Modern implementations use SIMD instructions, multi-threading, and GPU acceleration
+   - Libraries like FFTW, MKL, and cuFFT provide highly optimized implementations
+
+4. **Applications**:
+   - Signal processing: filtering, spectral analysis
+   - Audio processing: music analysis, speech recognition
+   - Image processing: filtering, feature extraction
+   - Numerical methods: fast convolution, solving PDEs
+   - Scientific computing: data analysis, simulations
+
+### Advanced FFT Variants
+
+- **Real-valued FFT**: Optimized for real-valued inputs (nearly 2× faster)
+- **Pruned FFT**: Optimized when many inputs or outputs are zero
+- **Split-radix FFT**: Combines radix-2 and radix-4 butterflies for better efficiency
+- **Bluestein's algorithm**: Handles non-power-of-2 sizes efficiently
+- **Parallel FFT algorithms**: Designed for multi-core and distributed systems
 ## References
 
 1. Newman, M. (2013). Computational Physics. CreateSpace Independent Publishing Platform.
