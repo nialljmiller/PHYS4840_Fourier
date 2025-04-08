@@ -27,7 +27,8 @@ def compute_a0(func, period=2*np.pi, num_points=1000):
     """
     x = np.linspace(0, period, num_points)
     y = func(x)
-    result = np.trapz(y, x)
+
+    result = #Ingegral of this
     return (1 / period) * result
 
 
@@ -47,11 +48,10 @@ def compute_an(func, n, period=2*np.pi, num_points=1000):
     x = np.linspace(0, period, num_points)
     y = func(x)
     
-    # Create the integrand: f(x) * cos(2πnx/period)
-    integrand = y * np.cos(2 * np.pi * n * x / period)
+    # Create the integrand: f(x) * cos(2*pi*n*x/period)
+    integrand = 
     
-    # Use NumPy's trapz function
-    result = np.trapz(integrand, x)
+    result = #integral of integrand
     
     # Scale by 2/period for the Fourier coefficient
     return (2/period) * result
@@ -74,11 +74,11 @@ def compute_bn(func, n, period=2*np.pi, num_points=1000):
     x = np.linspace(0, period, num_points)
     y = func(x)
     
-    # Create the integrand: f(x) * sin(2πnx/period)
-    integrand = y * np.sin(2 * np.pi * n * x / period)
+    # Create the integrand: f(x) * sin(2*pi*n*x/period)
+    integrand = 
     
     # Use NumPy's trapz function
-    result = np.trapz(integrand, x)
+    result = #see the other gh
     
     # Scale by 2/period for the Fourier coefficient
     return (2/period) * result
@@ -132,6 +132,9 @@ def fourier_series_approximation(x, a0, an, bn, period=2*np.pi):
     return result
 
 
+
+
+#typically we dont need this function but its good for visualising
 def compute_partial_approximations(x, a0, an, bn, period=2*np.pi):
     """
     Compute partial Fourier approximations with increasing number of terms.

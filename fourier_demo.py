@@ -23,22 +23,17 @@ def do_fourier(TERMS, wave):
     # Create x values for plotting
     x_range = (-2*np.pi, 2*np.pi)
     num_points = 10000
-    x = np.linspace(x_range[0], x_range[1], num_points, endpoint=False)
+    x = np.linspace(x_range[0], x_range[1], num_points)
     y_exact = wave(x)
     
 
 
     # Compute Fourier series coefficients
-    a0, an, bn = fs.compute_coefficients(wave, TERMS)
-    
+        
     # Calculate the Fourier approximation
-    y_approx = fs.fourier_series_approximation(x, a0, an, bn)
-    
+        
     # Calculate partial approximations
-    partial_approx = fs.compute_partial_approximations(x, a0, an, bn)
     
-
-
 
 
     # 1. Plot the series with TERMS set
@@ -152,6 +147,10 @@ def do_fourier(TERMS, wave):
     
 
 
+
+
+#some example wave forms, I encourage you to make your own :)
+
 def square_wave(x):
     """Square wave: 1 for 0 <= x < pi, -1 for pi <= x < 2pi"""
     return np.where((x % (2*np.pi)) < np.pi, 1.0, -1.0)
@@ -204,12 +203,12 @@ def ecg_like_signal(x):
     return p_wave + qrs1 + qrs2 + qrs3 + t_wave
 
 def my_signal(x):
-    return np.sin(x) * np.cos(np.sin(10 * x))
+    return half_rectified_sine(np.sin(x) * np.cos(np.sin(10 * x)))
 
 
 def main():
     TERMS = 100
-    wave = pulse_train
+    wave = my_signal
     do_fourier(TERMS, wave)
 
 
