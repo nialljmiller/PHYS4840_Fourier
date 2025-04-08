@@ -153,7 +153,7 @@ The naive DFT implementation has a time complexity of $O(N^2)$, making it imprac
 
 The inverse DFT (IDFT) reverses the transformation, taking frequency components back to the time domain:
 
-$$x_n = \frac{1}{N}\sum_{k=0}^{N-1} X_k e^{i\frac{2\pi}{N}kn} \quad \text{for } n = 0, 1, ..., N-1$$
+$$x_k = \frac{1}{N}\sum_{n=0}^{N-1} X_n e^{i\frac{2\pi}{N}kn} \quad \text{for } k = 0, 1, ..., N-1$$
 
 Implementation example:
 
@@ -171,9 +171,9 @@ def idft_naive(X):
     N = len(X)
     x = np.zeros(N, dtype=complex)
     
-    for n in range(N):
-        for k in range(N):
-            x[n] += X[k] * np.exp(2j * np.pi * k * n / N)
+    for k in range(N):
+        for n in range(N):
+            x[k] += X[n] * np.exp(2j * np.pi * k * n / N)
     
     # Normalize by N
     x = x / N
