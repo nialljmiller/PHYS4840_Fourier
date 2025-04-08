@@ -184,7 +184,7 @@ def idft_naive(X):
 
 
 ## Fast Fourier Transform
-
+![alt text](https://github.com/nialljmiller/PHYS4840_Fourier/blob/main/Fourier_timings.png "FT timings")
 ### The Breakthrough Algorithm
 
 The Fast Fourier Transform (FFT) is an algorithm that computes the Discrete Fourier Transform (DFT) in O(N log N) time, making Fourier analysis practical for real-world applications. This remarkable improvement over the naive O(N²) DFT implementation represents one of the most significant algorithmic breakthroughs in computational mathematics.
