@@ -78,11 +78,11 @@ def compute_coefficients(func, n_terms, period=2*np.pi, num_points=1000):
     for n in range(1, n_terms + 1):
         # an coefficients (cosine terms)
         integrand = y * np.cos(2 * np.pi * n * x / period)
-        an[n-1] = 2 * np.mean(integrand)
+        an[n-1] = integral of above
         
         # bn coefficients (sine terms)
         integrand = y * np.sin(2 * np.pi * n * x / period)
-        bn[n-1] = 2 * np.mean(integrand)
+        bn[n-1] = integral of above
     
     return a0, an, bn
 ```
