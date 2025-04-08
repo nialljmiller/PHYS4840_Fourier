@@ -269,5 +269,3 @@ def bit_reversal_permutation(N):
 
 1. Newman, M. (2013). Computational Physics. CreateSpace Independent Publishing Platform.
 2. Feigelson, E. D., & Babu, G. J. (2012). Modern Statistical Methods for Astronomy. Cambridge University Press.
-3. Cooley, J. W., & Tukey, J. W. (1965). An algorithm for the machine calculation of complex Fourier series. Mathematics of Computation, 19(90), 297-301.
-4. Brigham, E. O. (1988). The Fast Fourier Transform and Its Applications. Prentice Hall.
