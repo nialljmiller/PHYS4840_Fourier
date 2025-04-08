@@ -60,11 +60,9 @@ def do_fourier(TERMS, wave):
     plt.figure(figsize=(10, 6))
     
     # Compute magnitude of coefficients
-    magnitude = np.sqrt(an**2 + bn**2)
     n_values = np.arange(1, TERMS + 1)
     
     # Plot coefficient magnitudes
-    plt.stem(n_values, magnitude, 'b-', markerfmt='bo', label='|Coefficient|', basefmt=" ")
     plt.stem(n_values, an, 'g-', markerfmt='g^', label='an', basefmt=" ", linefmt='g--')
     plt.stem(n_values, bn, 'r-', markerfmt='rs', label='bn', basefmt=" ", linefmt='r--')
     
@@ -148,7 +146,8 @@ def do_fourier(TERMS, wave):
     ani = FuncAnimation(fig, update, frames=TERMS,
                        init_func=init, blit=True, interval=200)
     
-    plt.show()#ani.save('fourier_animation.gif', writer='pillow', fps=5)
+    plt.show()
+    ani.save('fourier_animation.gif', writer='pillow', fps=5)
     plt.close()
     
 
@@ -187,25 +186,30 @@ def half_rectified_sine(x):
 
 
 def ecg_like_signal(x):
-    """ECG-like signal (combination of scaled Gaussians)"""
-    # Normalize to [0, 2pi]
-    x_norm = x % (2*np.pi)
-    
-    # Create the QRS complex with Gaussians
-    p_wave = 0.25 * np.exp(-((x_norm - 0.7*np.pi)**2) / (0.1*np.pi)**2)
-    qrs_complex = np.exp(-((x_norm - np.pi)**2) / (0.05*np.pi)**2) - 0.3 * np.exp(-((x_norm - 0.9*np.pi)**2) / (0.04*np.pi)**2) - 0.2 * np.exp(-((x_norm - 1.1*np.pi)**2) / (0.04*np.pi)**2)
-    t_wave = 0.5 * np.exp(-((x_norm - 1.4*np.pi)**2) / (0.1*np.pi)**2)
-    
-    return p_wave + qrs_complex + t_wave
 
+    def r(val, variation=0.1):
+        return val * np.random.uniform(1 - variation, 1 + variation)
 
-def composite_signal(x):
-    return square_wave(x)
+    # Normalize x to [0, 2pi]
+    x_norm = x % (2 * np.pi)
+    # P-wave with randomized amplitude, center, and width
+    p_wave = r(0.25, 0.2) * np.exp(-((x_norm - r(0.7 * np.pi, 0.05))**2) / (r(0.1 * np.pi, 0.05)**2))
+    # QRS complex: one positive peak and two negative deflections
+    qrs1 = r(1.0, 0.2) * np.exp(-((x_norm - r(np.pi, 0.05))**2) / (r(0.05 * np.pi, 0.05)**2))
+    qrs2 = r(-0.3, 0.2) * np.exp(-((x_norm - r(0.9 * np.pi, 0.05))**2) / (r(0.04 * np.pi, 0.05)**2))
+    qrs3 = r(-0.2, 0.2) * np.exp(-((x_norm - r(1.1 * np.pi, 0.05))**2) / (r(0.04 * np.pi, 0.05)**2))
+    # T-wave with random parameters
+    t_wave = r(0.5, 0.2) * np.exp(-((x_norm - r(1.4 * np.pi, 0.05))**2) / (r(0.1 * np.pi, 0.05)**2))
+    
+    return p_wave + qrs1 + qrs2 + qrs3 + t_wave
+
+def my_signal(x):
+    return np.sin(x) * np.cos(np.sin(10 * x))
 
 
 def main():
-    TERMS = 20
-    wave = composite_signal
+    TERMS = 100
+    wave = pulse_train
     do_fourier(TERMS, wave)
 
 

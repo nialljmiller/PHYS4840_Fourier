@@ -12,6 +12,7 @@ PHYS 4840 - Mathematical and Computational Methods II
 import numpy as np
 
 
+
 def compute_a0(func, period=2*np.pi, num_points=1000):
     """
     Compute the a0 Fourier coefficient (constant term).
@@ -26,12 +27,13 @@ def compute_a0(func, period=2*np.pi, num_points=1000):
     """
     x = np.linspace(0, period, num_points)
     y = func(x)
-    return np.mean(y)
+    result = np.trapz(y, x)
+    return (1 / period) * result
 
 
 def compute_an(func, n, period=2*np.pi, num_points=1000):
     """
-    Compute the an Fourier coefficient for cosine terms.
+    Compute the an Fourier coefficient for cosine terms using NumPy's trapz.
     
     Parameters:
         func (callable): Function to approximate
@@ -44,13 +46,21 @@ def compute_an(func, n, period=2*np.pi, num_points=1000):
     """
     x = np.linspace(0, period, num_points)
     y = func(x)
+    
+    # Create the integrand: f(x) * cos(2πnx/period)
     integrand = y * np.cos(2 * np.pi * n * x / period)
-    return 2 * np.mean(integrand)
+    
+    # Use NumPy's trapz function
+    result = np.trapz(integrand, x)
+    
+    # Scale by 2/period for the Fourier coefficient
+    return (2/period) * result
+
 
 
 def compute_bn(func, n, period=2*np.pi, num_points=1000):
     """
-    Compute the bn Fourier coefficient for sine terms.
+    Compute the bn Fourier coefficient for sine terms using NumPy's trapz.
     
     Parameters:
         func (callable): Function to approximate
@@ -63,8 +73,16 @@ def compute_bn(func, n, period=2*np.pi, num_points=1000):
     """
     x = np.linspace(0, period, num_points)
     y = func(x)
+    
+    # Create the integrand: f(x) * sin(2πnx/period)
     integrand = y * np.sin(2 * np.pi * n * x / period)
-    return 2 * np.mean(integrand)
+    
+    # Use NumPy's trapz function
+    result = np.trapz(integrand, x)
+    
+    # Scale by 2/period for the Fourier coefficient
+    return (2/period) * result
+
 
 
 def compute_coefficients(func, n_terms, period=2*np.pi, num_points=1000):
