@@ -202,6 +202,8 @@ To appreciate this difference, consider the computational requirements for a sig
 
 This approximately 50,000× speedup is what made many modern digital signal processing applications feasible.
 
+It cant really be understated just how important this is. 
+
 ### Divide and Conquer Strategy
 
 The Cooley-Tukey FFT algorithm uses an elegant recursive approach:
