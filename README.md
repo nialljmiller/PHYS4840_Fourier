@@ -375,6 +375,278 @@ When implementing or using FFT in practice:
 - **Split-radix FFT**: Combines radix-2 and radix-4 butterflies for better efficiency
 - **Bluestein's algorithm**: Handles non-power-of-2 sizes efficiently
 - **Parallel FFT algorithms**: Designed for multi-core and distributed systems
+
+
+
+
+
+
+## Inverse Fourier Transform
+
+The inverse DFT (IDFT) reverses the transformation, taking frequency components back to the time domain:
+
+$$x_k = \frac{1}{N}\sum_{n=0}^{N-1} X_n e^{i\frac{2\pi}{N}kn} \quad \text{for } k = 0, 1, ..., N-1$$
+
+Implementation example:
+
+```python
+def idft_naive(X):
+    """
+    Compute the Inverse Discrete Fourier Transform (IDFT).
+    
+    Parameters:
+        X (array): Input frequency domain signal array
+        
+    Returns:
+        array: IDFT of X (complex array)
+    """
+    N = len(X)
+    x = np.zeros(N, dtype=complex)
+    
+    for k in range(N):
+        for n in range(N):
+            x[k] += X[n] * np.exp(2j * np.pi * k * n / N)
+    
+    # Normalize by N
+    x = x / N
+    
+    return x
+```
+
+## Fast Fourier Transform
+
+### The Breakthrough Algorithm
+
+The Fast Fourier Transform (FFT) is an algorithm that computes the DFT in $O(N \log N)$ time, making Fourier analysis practical for real-world applications.
+
+### Divide and Conquer Strategy
+
+The key insight of the FFT (specifically the Cooley-Tukey algorithm) is to recursively split the DFT computation into smaller DFTs:
+
+1. Split the N-point DFT into two N/2-point DFTs:
+   - One for even-indexed points
+   - One for odd-indexed points
+2. Combine results using the "butterfly" pattern
+
+### Computational Complexity Comparison
+
+| Algorithm | Time Complexity | Space Complexity | Example: N=1,000,000 |
+|-----------|-----------------|------------------|----------------------|
+| Naive DFT | $O(N^2)$        | $O(N)$           | ~1 trillion operations |
+| FFT       | $O(N \log N)$   | $O(N)$           | ~20 million operations |
+
+This dramatic improvement from $O(N^2)$ to $O(N \log N)$ is what made Fourier analysis practically useful for large datasets.
+
+### Recursive Implementation Example
+
+```python
+def fft_recursive(x):
+    """
+    Compute the FFT using the Cooley-Tukey algorithm.
+    Works for signal lengths that are powers of 2.
+    
+    Parameters:
+        x (array): Input signal array
+        
+    Returns:
+        array: FFT of x (complex array)
+    """
+    N = len(x)
+    
+    # Base case: FFT of a single point is the point itself
+    if N == 1:
+        return x
+    
+    # Check if N is a power of 2
+    if N & (N-1) != 0:
+        raise ValueError("Signal length must be a power of 2")
+    
+    # Split even and odd indices
+    even = fft_recursive(x[0::2])
+    odd = fft_recursive(x[1::2])
+    
+    # Twiddle factors
+    twiddle = np.exp(-2j * np.pi * np.arange(N//2) / N)
+    
+    # Combine using butterfly pattern
+    result = np.zeros(N, dtype=complex)
+    half_N = N // 2
+    
+    for k in range(half_N):
+        result[k] = even[k] + twiddle[k] * odd[k]
+        result[k + half_N] = even[k] - twiddle[k] * odd[k]
+    
+    return result
+```
+
+### Iterative Implementation Considerations
+
+While the recursive implementation is elegant, an iterative implementation with bit-reversal permutation is often more efficient in practice:
+
+```python
+def bit_reversal_permutation(N):
+    """Generate bit-reversal permutation indices for FFT."""
+    num_bits = int(np.log2(N))
+    indices = np.zeros(N, dtype=int)
+    
+    for i in range(N):
+        binary = format(i, f'0{num_bits}b')
+        reversed_binary = binary[::-1]
+        indices[i] = int(reversed_binary, 2)
+    
+    return indices
+```
+
+## Discrete Cosine and Sine Transforms
+
+### DCT: Mathematical Formulation
+
+The Discrete Cosine Transform (DCT) uses only cosine functions and produces real-valued outputs for real-valued inputs. The most common form (DCT-II) is:
+
+$$X_k = \sum_{n=0}^{N-1} x_n \cos\left[\frac{\pi}{N}(n+\frac{1}{2})k\right] \quad \text{for } k = 0, 1, ..., N-1$$
+
+### DST: Mathematical Formulation
+
+Similarly, the Discrete Sine Transform (DST) uses only sine functions:
+
+$$X_k = \sum_{n=0}^{N-1} x_n \sin\left[\frac{\pi}{N}(n+\frac{1}{2})(k+1)\right] \quad \text{for } k = 0, 1, ..., N-1$$
+
+### Advantages and Applications
+
+- **Energy Compaction**: DCT concentrates energy in fewer coefficients
+- **Real-valued**: Computationally more efficient for real data
+- **Applications**: JPEG image compression (DCT), MPEG video compression
+- **Boundary Conditions**: Better suited for certain boundary conditions in differential equations
+
+### Implementation Example (DCT-II)
+
+```python
+def dct_ii(x):
+    """
+    Compute the DCT-II of input signal x.
+    
+    Parameters:
+        x (array): Input signal array (real)
+        
+    Returns:
+        array: DCT of x (real array)
+    """
+    N = len(x)
+    X = np.zeros(N)
+    
+    for k in range(N):
+        for n in range(N):
+            X[k] += x[n] * np.cos(np.pi * (n + 0.5) * k / N)
+    
+    # Scale the DC component differently
+    X[0] *= np.sqrt(1/N)
+    # Scale AC components
+    X[1:] *= np.sqrt(2/N)
+    
+    return X
+```
+
+## Advanced Topics
+
+### Windowing Functions
+
+Windowing functions are applied to signals before Fourier analysis to reduce spectral leakage:
+
+| Window | Main Lobe Width | Side Lobe Attenuation | Use Case |
+|--------|-----------------|------------------------|----------|
+| Rectangular | Narrowest | -13 dB | Best frequency resolution |
+| Hamming | Medium | -43 dB | General-purpose |
+| Hann | Medium | -32 dB | Good balance |
+| Blackman | Wide | -58 dB | Excellent side lobe suppression |
+
+#### Implementation Example
+
+```python
+def apply_window(signal, window_type='hann'):
+    """Apply a windowing function to a signal"""
+    N = len(signal)
+    
+    if window_type == 'rectangular':
+        window = np.ones(N)
+    elif window_type == 'hamming':
+        window = 0.54 - 0.46 * np.cos(2 * np.pi * np.arange(N) / (N - 1))
+    elif window_type == 'hann':
+        window = 0.5 * (1 - np.cos(2 * np.pi * np.arange(N) / (N - 1)))
+    elif window_type == 'blackman':
+        window = (0.42 - 0.5 * np.cos(2 * np.pi * np.arange(N) / (N - 1)) + 
+                 0.08 * np.cos(4 * np.pi * np.arange(N) / (N - 1)))
+    
+    return signal * window
+```
+
+### Filtering and Smoothing
+
+Frequency domain filtering allows selective manipulation of signal components:
+
+#### Low-Pass Filter Example
+
+```python
+def lowpass_filter(signal, cutoff_freq, sample_rate):
+    """Apply a low-pass filter in the frequency domain"""
+    # Compute FFT
+    fft_result = np.fft.fft(signal)
+    frequencies = np.fft.fftfreq(len(signal), 1/sample_rate)
+    
+    # Create filter mask
+    mask = abs(frequencies) <= cutoff_freq
+    
+    # Apply filter
+    filtered_fft = fft_result * mask
+    
+    # Inverse FFT
+    return np.real(np.fft.ifft(filtered_fft))
+```
+
+### Nyquist-Shannon Sampling Theorem
+
+A fundamental principle in signal processing:
+
+- To accurately represent a signal, sample at a rate greater than twice its highest frequency
+- Sampling rate $f_s > 2f_{max}$
+- Maximum recoverable frequency: $f_{Nyquist} = \frac{f_s}{2}$
+- Aliasing occurs when signals contain frequencies above the Nyquist frequency
+
+### Frequency Resolution and Zero-Padding
+
+Frequency resolution in DFT depends on the observation length:
+
+- Resolution: $\Delta f = \frac{f_s}{N} = \frac{1}{T}$
+- Zero-padding increases the number of frequency points but doesn't improve fundamental resolution
+- Longer signals provide better frequency resolution
+
+## Applications
+
+### Signal Processing
+- Filtering (removing noise or unwanted frequencies)
+- Spectral analysis
+- Audio processing
+
+### Image Processing
+- Image compression (JPEG, etc.)
+- Feature extraction
+- Edge detection
+
+### Differential Equations
+- Solving PDEs using spectral methods
+- Fast Poisson solvers
+- Heat equation solutions
+
+### Astronomy and Physics
+- Analysis of periodic phenomena
+- Spectral line identification
+- Gravitational wave detection
+
+
+
+
+
+
+
 ## References
 
 1. Newman, M. (2013). Computational Physics. CreateSpace Independent Publishing Platform.

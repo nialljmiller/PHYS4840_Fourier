@@ -28,13 +28,16 @@ def do_fourier(TERMS, wave):
     
 
 
-    # Compute Fourier series coefficients
-        
-    # Calculate the Fourier approximation
-        
-    # Calculate partial approximations
-    
 
+    # Compute Fourier series coefficients
+    a0, an, bn = fs.compute_coefficients(wave, TERMS)
+    
+    # Calculate the Fourier approximation
+    y_approx = fs.fourier_series_approximation(x, a0, an, bn)
+    
+    # Calculate partial approximations
+    partial_approx = fs.compute_partial_approximations(x, a0, an, bn)
+    
 
     # 1. Plot the series with TERMS set
     plt.figure(figsize=(10, 6))
@@ -207,8 +210,8 @@ def my_signal(x):
 
 
 def main():
-    TERMS = 100
-    wave = my_signal
+    TERMS = 1000
+    wave = ecg_like_signal
     do_fourier(TERMS, wave)
 
 
