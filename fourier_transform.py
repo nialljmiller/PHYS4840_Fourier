@@ -55,21 +55,6 @@ def idft(X):
 
 
 
-def fft_radix2(x):
-    N = len(x)
-    if N == 1:
-        return x
-    if N & (N - 1) != 0:
-        raise ValueError("Length must be a power of 2")
-    even = fft_radix2(x[::2])
-    odd = fft_radix2(x[1::2])
-    twiddle = np.exp(-2j * np.pi * np.arange(N // 2) / N)
-    result = np.zeros(N, dtype=complex)
-    for k in range(N // 2):
-        result[k] = even[k] + twiddle[k] * odd[k]
-        result[k + N // 2] = even[k] - twiddle[k] * odd[k]
-    return result
-
 
 
 def fft_bluestein(x):
