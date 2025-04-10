@@ -175,6 +175,7 @@ def demo_audio_processing():
     # Create time axis for the full audio
     t = np.linspace(0, duration, n_samples)
     
+    print(f"Starting FT with {n_samples} samples...")
     # Compute FFT for all samples
     X = np.fft.fft(audio_segment)
     

@@ -54,7 +54,55 @@ def idft(X):
     return x
 
 
-def fft(x):
+
+def fft_radix2(x):
+    N = len(x)
+    if N == 1:
+        return x
+    if N & (N - 1) != 0:
+        raise ValueError("Length must be a power of 2")
+    even = fft_radix2(x[::2])
+    odd = fft_radix2(x[1::2])
+    twiddle = np.exp(-2j * np.pi * np.arange(N // 2) / N)
+    result = np.zeros(N, dtype=complex)
+    for k in range(N // 2):
+        result[k] = even[k] + twiddle[k] * odd[k]
+        result[k + N // 2] = even[k] - twiddle[k] * odd[k]
+    return result
+
+
+
+def fft_bluestein(x):
+    N = len(x)
+    M = 2**int(np.ceil(np.log2(2*N - 1)))  # Next power of 2 >= 2N - 1
+    a = np.array(x, dtype=complex)
+
+    # Chirp signal
+    n = np.arange(N)
+    chirp = np.exp(1j * np.pi * (n**2) / N)
+    
+    a_chirp = a * chirp
+    b = np.zeros(M, dtype=complex)
+    b[:N] = np.exp(-1j * np.pi * (n**2) / N)
+    b[-(N-1):] = np.exp(-1j * np.pi * (n[1:][::-1]**2) / N)
+
+    A = np.fft.fft(a_chirp, n=M)
+    B = np.fft.fft(b, n=M)
+    C = A * B
+    c = np.fft.ifft(C)[:N]
+    return c * chirp
+
+
+
+def fft_zeropad(x):
+    N = len(x)
+    next_pow2 = 1 << (N - 1).bit_length()
+    x_padded = np.pad(x, (0, next_pow2 - N), mode='constant')
+    return fft_radix2(x_padded)
+
+
+
+def fft_ct(x):
     """
     Compute the Fast Fourier Transform (FFT) using the Cooley-Tukey algorithm.
     This implementation works for signal lengths that are powers of 2.
@@ -93,6 +141,9 @@ def fft(x):
     return result
 
 
+
+
+
 def ifft(X):
     """
     Compute the Inverse Fast Fourier Transform (IFFT).
@@ -111,88 +162,36 @@ def ifft(X):
     return x
 
 
-def compute_periodogram(x, fs=1.0):
-    """
-    Compute the periodogram (power spectral density estimate) of the input signal.
-    
-    Parameters:
-        x (array): Input signal (time domain)
-        fs (float): Sampling frequency in Hz
-    
-    Returns:
-        tuple: (frequencies, power spectrum)
-    """
-    N = len(x)
-    
-    # Compute FFT (using NumPy for efficiency)
-    X = np.fft.fft(x)
-    
-    # Compute power spectrum (periodogram)
-    power_spectrum = np.abs(X)**2 / N
-    
-    # Compute frequency axis
-    frequencies = np.fft.fftfreq(N, d=1/fs)
-    
-    return frequencies, power_spectrum
 
 
-def filter_spectrum(X, frequencies, band_type='low', cutoff=None, band=(None, None)):
+
+
+def compress_audio_fft(audio, keep_ratio=0.1):
     """
-    Filter a spectrum in the frequency domain.
+    Compress audio by keeping only the top `keep_ratio` frequency components (by magnitude).
     
     Parameters:
-        X (array): Input spectrum (from FFT)
-        frequencies (array): Frequency axis
-        band_type (str): 'low', 'high', or 'band'
-        cutoff (float): Cutoff frequency for low/high pass
-        band (tuple): (low_cutoff, high_cutoff) for bandpass
-    
-    Returns:
-        array: Filtered spectrum
-    """
-    X_filtered = X.copy()
-    
-    if band_type == 'low':
-        # Low-pass filter
-        X_filtered[np.abs(frequencies) > cutoff] = 0
-    
-    elif band_type == 'high':
-        # High-pass filter
-        X_filtered[np.abs(frequencies) < cutoff] = 0
-    
-    elif band_type == 'band':
-        # Band-pass filter
-        low, high = band
-        X_filtered[(np.abs(frequencies) < low) | (np.abs(frequencies) > high)] = 0
+        audio (np.ndarray): Time-domain audio signal
+        keep_ratio (float): Fraction of strongest frequencies to keep (0 < keep_ratio <= 1)
         
-    return X_filtered
-
-
-def reconstruct_signal(X_filtered):
-    """
-    Reconstruct a time-domain signal from a filtered spectrum.
-    
-    Parameters:
-        X_filtered (array): Filtered spectrum
-    
     Returns:
-        array: Reconstructed time-domain signal
+        compressed_audio (np.ndarray): Reconstructed audio from compressed frequency domain
+        X_compressed (np.ndarray): The compressed spectrum (mostly zero)
     """
-    # Use NumPy's IFFT for efficiency
-    return np.fft.ifft(X_filtered)
+    N = len(audio)
+    X = np.fft.fft(audio)
+    magnitudes = np.abs(X)
+    
+    # Determine how many frequencies to keep
+    #new_N = N * keep_ratio? something like that...
 
+    # Get indices of top frequencies by magnitude
+    #can we assume its already sorted? np.argsort() might be useful here...
 
-def spectrum_to_magnitude_phase(X):
-    """
-    Convert a complex spectrum to magnitude and phase representation.
+    # Create a compressed version of the spectrum
+    #x_compressed = x (but only the kept indices)
+
+    # Inverse FFT to get time-domain signal
+    #remember we did all of this on the frequency domain, turn it back into a signal...
     
-    Parameters:
-        X (array): Complex spectrum from FFT
-    
-    Returns:
-        tuple: (magnitude_spectrum, phase_spectrum)
-    """
-    magnitude = np.abs(X)
-    phase = np.angle(X)
-    
-    return magnitude, phase
+    return 
