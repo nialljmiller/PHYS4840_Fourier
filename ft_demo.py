@@ -95,11 +95,7 @@ def identify_note(frequency):
 
 
 def demo_noisy_sinusoid():
-    """
-    Simple demonstration of Fourier Transform with a noisy sinusoid
-    """
-    print("\n--- Simple Sinusoid Analysis ---")
-    
+
     # Create a signal
     fs = 1000  # Sampling frequency (Hz)
     duration = 1.0  # Signal duration (seconds)
@@ -162,10 +158,6 @@ def demo_noisy_sinusoid():
 
 
 def demo_audio_processing():
-    """
-    Simple demonstration of audio processing with Fourier Transform
-    """
-    print("\n--- Audio Analysis with Note Identification ---")
     
     # Load the audio file
     fs, audio_data = wavfile.read('audio.wav')
@@ -183,10 +175,7 @@ def demo_audio_processing():
     # Create time axis for the full audio
     t = np.linspace(0, duration, n_samples)
     
-    print(f"Processing FULL audio: {n_samples} samples, {fs} Hz sample rate, {duration:.2f} seconds")
-
     # Compute FFT for all samples
-    print(f"Computing Fourier Transform for all {n_samples} samples...")
     X = np.fft.fft(audio_segment)
     
     # Get only the first half of the spectrum (positive frequencies)
@@ -242,9 +231,6 @@ def demo_audio_processing():
     plt.savefig('audio_analysis.png')
     plt.show()
     
-    # Simple filtering demonstration
-    print("\nSimple Frequency Filtering Demonstration")
-    
     # Define a simple bandpass filter around the main frequency component
     if len(peak_freqs) > 0:
         main_freq = peak_freqs[0]
@@ -264,8 +250,8 @@ def demo_audio_processing():
                 if i > 0:  # Skip DC component
                     X_filtered[len(X)-i] = X[len(X)-i]
         
-        # Reconstruct the filtered signal
-        print("Reconstructing filtered signal for the entire audio...")
+
+
         filtered_signal = np.fft.ifft(X_filtered)
         
         # Plot the original and filtered signals
@@ -309,8 +295,6 @@ def demo_audio_processing():
 
 
 def main():
-    print("Simplified Fourier Transform Demonstration")
-    print("Using our custom Fourier Transform implementation")
     
     # Demo 1: Noisy Sinusoid Analysis
     demo_noisy_sinusoid()
