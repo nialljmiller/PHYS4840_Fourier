@@ -102,22 +102,18 @@ def demo_noisy_sinusoid():
     t = np.linspace(0, duration, int(fs * duration), endpoint=False)
     
     # Signal with two frequencies
-    f1, f2 = 50, 120  # Frequencies (Hz)
-    signal = np.sin(2 * np.pi * f1 * t) + 0.5 * np.sin(2 * np.pi * f2 * t)
+    f1 = #Frequency 1
+    f2 = #and 2
+    A1 = #Amplitude 1
+    A2 = #and 2
+    signal = 
     
     # Add some noise
-    np.random.seed(42)
     noisy_signal = signal + 0.2 * np.random.randn(len(t))
     
-    # Compute DFT using our module
-    X = ft.dft(noisy_signal)
-    
-    # Get only the first half of the spectrum (positive frequencies)
-    half_n = len(X) // 2
-    magnitudes = np.abs(X[:half_n]) / len(noisy_signal)
-    
+    # Compute FT using our module
+
     # Create frequency grid
-    freqs = np.linspace(0, fs/2, half_n)
     
     # Find peaks in the spectrum
     peak_freqs, peak_mags = find_peaks(magnitudes, freqs)
